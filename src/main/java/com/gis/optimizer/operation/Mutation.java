@@ -1,6 +1,8 @@
 package com.gis.optimizer.operation;
 
+import com.gis.database.model.Municipality;
 import com.gis.optimizer.model.BasicGenome;
+import com.google.common.collect.Table;
 import org.uncommons.maths.number.NumberGenerator;
 import org.uncommons.maths.random.Probability;
 import org.uncommons.watchmaker.framework.EvolutionaryOperator;
@@ -13,11 +15,17 @@ public class Mutation implements EvolutionaryOperator<BasicGenome> {
 
     private final NumberGenerator<Double> mutationAmount;
     private final NumberGenerator<Probability> mutationProbability;
+    private final List<Municipality> municipalities;
+    private final Table dMatrix;
 
 
-    public Mutation(NumberGenerator<Probability> mutationProbability, NumberGenerator<Double> mutationAmount) {
+    public Mutation(NumberGenerator<Probability> mutationProbability, NumberGenerator<Double> mutationAmount,
+                    List<Municipality> municipalities, Table dMatrix) {
+
         this.mutationProbability = mutationProbability;
         this.mutationAmount = mutationAmount;
+        this.municipalities = municipalities;
+        this.dMatrix = dMatrix;
     }
 
 
@@ -27,14 +35,11 @@ public class Mutation implements EvolutionaryOperator<BasicGenome> {
     }
 
 
-    private BasicGenome mutateTerritory(BasicGenome genome, Random rng){
+    private BasicGenome mutateTerritory(BasicGenome genome, Random rng) {
 
-        if (mutationProbability.nextValue().nextEvent(rng))
-        {
+        if (mutationProbability.nextValue().nextEvent(rng)) {
             return genome;
-        }
-        else
-        {
+        } else {
             return genome;
         }
     }

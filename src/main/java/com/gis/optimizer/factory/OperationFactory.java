@@ -1,8 +1,10 @@
 package com.gis.optimizer.factory;
 
+import com.gis.database.model.Municipality;
 import com.gis.optimizer.model.BasicGenome;
 import com.gis.optimizer.operation.CrossOver;
 import com.gis.optimizer.operation.Mutation;
+import com.google.common.collect.Table;
 import org.uncommons.maths.number.AdjustableNumberGenerator;
 import org.uncommons.maths.number.ConstantGenerator;
 import org.uncommons.maths.random.GaussianGenerator;
@@ -18,7 +20,10 @@ import java.util.Random;
 
 public class OperationFactory {
 
-    public EvolutionaryOperator<List<BasicGenome>> createEvolutionPipeline(Random rng) {
+    public EvolutionaryOperator<List<BasicGenome>> createEvolutionPipeline(
+            Random rng,
+            List<Municipality> municipalities,
+            Table dMatrix) {
 
         List<EvolutionaryOperator<List<BasicGenome>>> operators = new LinkedList<>();
 
@@ -35,7 +40,9 @@ public class OperationFactory {
                 new ListOperator<>(
                         new Mutation(
                                 new AdjustableNumberGenerator<>(new Probability(0.001d)),
-                                new GaussianGenerator(0, 3, rng)
+                                new GaussianGenerator(0, 3, rng),
+                                municipalities,
+                                dMatrix
                         )
                 )
         );

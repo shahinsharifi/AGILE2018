@@ -1,13 +1,11 @@
 package com.gis.optimizer;
 
-import com.gis.database.model.Dmatrix;
+import com.gis.config.DmatrixConfiguration;
 import com.gis.database.model.Municipality;
-import com.gis.database.service.dmatrix.DmatrixServiceImpl;
 import com.gis.database.service.municipality.MunicipalityServiceImpl;
 import com.gis.optimizer.evaluator.SolutionEvaluator;
 import com.gis.optimizer.factory.OperationFactory;
 import com.gis.optimizer.factory.PopulationFactory;
-import com.gis.optimizer.helper.DistanceMatrixHelper;
 import com.gis.optimizer.logger.EvolutionLogger;
 import com.gis.optimizer.model.BasicGenome;
 import com.google.common.collect.Table;
@@ -34,35 +32,28 @@ import java.util.Random;
 public class OptimizationEngine {
 
 
-    @Autowired
-    private DmatrixServiceImpl dmatrixManagerService;
+    private Random rng;
+    private static final Logger LOGGER = LoggerFactory.getLogger(OptimizationEngine.class);
 
     @Autowired
     private MunicipalityServiceImpl municipalityService;
 
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(OptimizationEngine.class);
-
-
     public int evolve() throws Exception {
 
-        List<Dmatrix> dmatrix = dmatrixManagerService.getAll();
-        LOGGER.info("Distances are loaded...");
+        rng = new XORShiftRNG();
 
         List<Municipality> municipalities = municipalityService.getAll();
         LOGGER.info("Municipalities are loaded...");
 
-        DistanceMatrixHelper distanceMatrixHelper = new DistanceMatrixHelper(dmatrix);
-        Table distanceMatrix = distanceMatrixHelper.getDistanceTable();
+        List<Municipality> initialSeed = getRandomInitialSeed(rng,municipalities, 20);
 
-
-        Random rng = new XORShiftRNG();
-
+        Table distanceMatrix = DmatrixConfiguration.getDistanceMatrix();
 
         //Generating random population
         CandidateFactory<List<BasicGenome>> candidateFactory = new PopulationFactory<>(
-                new ArrayList<>(),
-                new ArrayList<>()
+                municipalities,
+                initialSeed
         );
 
 
@@ -74,7 +65,7 @@ public class OptimizationEngine {
 
         //Configuration of operation pipeline
         OperationFactory Operations = new OperationFactory();
-        EvolutionaryOperator<List<BasicGenome>> pipeline = Operations.createEvolutionPipeline(rng);
+        EvolutionaryOperator<List<BasicGenome>> pipeline = Operations.createEvolutionPipeline(rng, municipalities, distanceMatrix);
 
 
         //Configuration of solution evaluator
@@ -95,8 +86,8 @@ public class OptimizationEngine {
         engine.setSingleThreaded(false);
 
 
-        //Running evolutionry algorithm
-        List<BasicGenome> result  = engine.evolve(
+        //Running evolutionary algorithm
+        List<BasicGenome> result = engine.evolve(
                 15,
                 2,
                 new TargetFitness(100, false)
@@ -104,6 +95,26 @@ public class OptimizationEngine {
 
 
         return result.size();
+    }
+
+
+    private List<Municipality> getRandomInitialSeed(Random rng, List<Municipality> municipalities, int seedSize) throws Exception {
+
+        List<Municipality> initialSeed = new ArrayList<>();
+        int start = 0;
+        int end = municipalities.size() - 1;
+        int cur = 0;
+        int remaining = end - start;
+        for (int i = start; i < end && seedSize > 0; i++) {
+            double probability = rng.nextDouble();
+            if (probability < ((double) seedSize) / (double) remaining) {
+                seedSize--;
+                initialSeed.add(cur++, municipalities.get(i));
+            }
+            remaining--;
+        }
+
+        return initialSeed;
     }
 
 }

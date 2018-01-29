@@ -3,13 +3,13 @@ package com.gis.optimizer.model;
 public class BasicGenome implements Comparable<BasicGenome>
 {
 
-    private String facilityID;
     private String demandID;
+    private String facilityID;
 
 
-    public BasicGenome(String facilityID, String demandID) {
-        this.facilityID = facilityID;
+    public BasicGenome(String demandID, String facilityID) {
         this.demandID = demandID;
+        this.facilityID = facilityID;
     }
 
     public String getFacilityID() {
