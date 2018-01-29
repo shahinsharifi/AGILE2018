@@ -2,7 +2,10 @@ package com.gis.optimizer;
 
 import com.gis.config.DmatrixConfiguration;
 import com.gis.database.model.Municipality;
+import com.gis.database.model.Pmedian;
 import com.gis.database.service.municipality.MunicipalityServiceImpl;
+import com.gis.database.service.pmedian.PmedianService;
+import com.gis.database.service.pmedian.PmedianServiceImpl;
 import com.gis.optimizer.evaluator.SolutionEvaluator;
 import com.gis.optimizer.factory.OperationFactory;
 import com.gis.optimizer.factory.PopulationFactory;
@@ -21,6 +24,7 @@ import org.uncommons.watchmaker.framework.EvolutionaryOperator;
 import org.uncommons.watchmaker.framework.GenerationalEvolutionEngine;
 import org.uncommons.watchmaker.framework.SelectionStrategy;
 import org.uncommons.watchmaker.framework.selection.TournamentSelection;
+import org.uncommons.watchmaker.framework.termination.GenerationCount;
 import org.uncommons.watchmaker.framework.termination.TargetFitness;
 
 import java.util.ArrayList;
@@ -38,8 +42,11 @@ public class OptimizationEngine {
     @Autowired
     private MunicipalityServiceImpl municipalityService;
 
+    @Autowired
+    private PmedianServiceImpl pmedianService;
 
-    public int evolve() throws Exception {
+
+    public boolean evolve() throws Exception {
 
         rng = new XORShiftRNG();
 
@@ -90,11 +97,27 @@ public class OptimizationEngine {
         List<BasicGenome> result = engine.evolve(
                 15,
                 2,
-                new TargetFitness(100, false)
+                new GenerationCount(50)
         );
 
 
-        return result.size();
+        //Cleaning up database
+        pmedianService.deleteAll();
+        LOGGER.info("Cleaning up database...");
+
+        //Inserting result into the database
+        LOGGER.info("Adding result to the database...");
+        for(BasicGenome genome: result){
+            Pmedian pmedian = new Pmedian();
+            pmedian.setDemandId(genome.getDemandID());
+            pmedian.setFacilityId(genome.getFacilityID());
+            pmedianService.insert(pmedian);
+        }
+
+
+        LOGGER.info("End of processing ...");
+
+        return result.size() > 0;
     }
 
 

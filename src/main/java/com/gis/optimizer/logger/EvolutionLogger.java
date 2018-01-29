@@ -8,7 +8,7 @@ import org.uncommons.watchmaker.framework.islands.IslandEvolutionObserver;
 public class EvolutionLogger<T> implements IslandEvolutionObserver<T> {
 
     long threadID;
-    private Logger LOG = LoggerFactory.getLogger(EvolutionLogger.class);
+    private Logger Logger = LoggerFactory.getLogger(EvolutionLogger.class);
 
     public EvolutionLogger(long threadID){
         this.threadID = threadID;
@@ -18,10 +18,10 @@ public class EvolutionLogger<T> implements IslandEvolutionObserver<T> {
     public void populationUpdate(PopulationData<? extends T> data) {
         try {
 
-            //Let log something here
+            Logger.info("Generation " + data.getGenerationNumber() + ": " + data.getBestCandidateFitness());
 
         } catch (Exception ex) {
-            LOG.error(ex.toString());
+            Logger.error(ex.toString());
         }
     }
 
