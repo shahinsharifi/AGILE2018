@@ -3,7 +3,7 @@ package com.gis.optimizer.factory;
 import com.gis.database.model.Municipality;
 import com.gis.optimizer.model.BasicGenome;
 import com.gis.optimizer.operation.CrossOver;
-import com.gis.optimizer.operation.Mutation;
+import com.gis.optimizer.operation.DemandMutation;
 import com.google.common.collect.Table;
 import org.uncommons.maths.number.AdjustableNumberGenerator;
 import org.uncommons.maths.number.ConstantGenerator;
@@ -38,7 +38,7 @@ public class OperationFactory {
         //Installing mutation operator
         operators.add(
                 new ListOperator<>(
-                        new Mutation(
+                        new DemandMutation(
                                 new AdjustableNumberGenerator<>(new Probability(0.001d)),
                                 new GaussianGenerator(0, 3, rng),
                                 municipalities,

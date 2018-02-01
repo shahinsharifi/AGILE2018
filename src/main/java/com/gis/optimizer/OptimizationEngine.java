@@ -25,11 +25,10 @@ import org.uncommons.watchmaker.framework.GenerationalEvolutionEngine;
 import org.uncommons.watchmaker.framework.SelectionStrategy;
 import org.uncommons.watchmaker.framework.selection.TournamentSelection;
 import org.uncommons.watchmaker.framework.termination.GenerationCount;
+import org.uncommons.watchmaker.framework.termination.Stagnation;
 import org.uncommons.watchmaker.framework.termination.TargetFitness;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 
 @Service
@@ -76,7 +75,7 @@ public class OptimizationEngine {
 
 
         //Configuration of solution evaluator
-        SolutionEvaluator evaluator = new SolutionEvaluator();
+        SolutionEvaluator evaluator = new SolutionEvaluator(distanceMatrix);
 
 
         //Instantiation of evolutionary engine
@@ -95,9 +94,9 @@ public class OptimizationEngine {
 
         //Running evolutionary algorithm
         List<BasicGenome> result = engine.evolve(
-                15,
-                2,
-                new GenerationCount(50)
+                100,
+                20,
+                new Stagnation(500,false)
         );
 
 
@@ -114,7 +113,7 @@ public class OptimizationEngine {
             pmedianService.insert(pmedian);
         }
 
-
+        calculateFacilityCapacity(result);
         LOGGER.info("End of processing ...");
 
         return result.size() > 0;
@@ -138,6 +137,22 @@ public class OptimizationEngine {
         }
 
         return initialSeed;
+    }
+
+
+    private void calculateFacilityCapacity(List<BasicGenome> genomes){
+
+        Map<String,Integer> result = new HashMap<>();
+        for(BasicGenome genome: genomes){
+            if(result.containsKey(genome.getFacilityID())){
+                result.put(genome.getFacilityID(),result.get(genome.getFacilityID()) + 1);
+            }else
+                result.put(genome.getFacilityID(), 1);
+        }
+
+        for(String str: result.keySet()){
+            LOGGER.info(str + " -> " + result.get(str));
+        }
     }
 
 }

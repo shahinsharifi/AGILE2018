@@ -27,7 +27,11 @@ public class PopulationFactory <T>  extends AbstractCandidateFactory<List<T>> {
 
         for (Municipality municipality : this.demands) {
             int randomIndex = rng.nextInt(this.facilities.size());
-            candidate.add((T) new BasicGenome(municipality.getMunId(), this.facilities.get(randomIndex).getMunId()));
+            candidate.add((T) new BasicGenome(
+                    municipality.getMunId(),
+                    this.facilities.get(randomIndex).getMunId(),
+                    municipality.getWeight()
+            ));
         }
 
         return candidate;

@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Random;
 
 
-public class Mutation implements EvolutionaryOperator<BasicGenome> {
+public class DemandMutation implements EvolutionaryOperator<BasicGenome> {
 
     private final NumberGenerator<Double> mutationAmount;
     private final NumberGenerator<Probability> mutationProbability;
@@ -19,8 +19,8 @@ public class Mutation implements EvolutionaryOperator<BasicGenome> {
     private final Table dMatrix;
 
 
-    public Mutation(NumberGenerator<Probability> mutationProbability, NumberGenerator<Double> mutationAmount,
-                    List<Municipality> municipalities, Table dMatrix) {
+    public DemandMutation(NumberGenerator<Probability> mutationProbability, NumberGenerator<Double> mutationAmount,
+                          List<Municipality> municipalities, Table dMatrix) {
 
         this.mutationProbability = mutationProbability;
         this.mutationAmount = mutationAmount;
