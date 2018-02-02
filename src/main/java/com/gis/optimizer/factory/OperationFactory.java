@@ -39,7 +39,7 @@ public class OperationFactory {
         operators.add(
                 new ListOperator<>(
                         new DemandMutation(
-                                new AdjustableNumberGenerator<>(new Probability(0.001d)),
+                                new AdjustableNumberGenerator<>(new Probability(0.00001d)),
                                 new GaussianGenerator(0, 3, rng),
                                 municipalities,
                                 dMatrix

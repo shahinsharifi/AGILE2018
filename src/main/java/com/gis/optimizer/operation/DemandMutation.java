@@ -7,6 +7,7 @@ import org.uncommons.maths.number.NumberGenerator;
 import org.uncommons.maths.random.Probability;
 import org.uncommons.watchmaker.framework.EvolutionaryOperator;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -30,18 +31,42 @@ public class DemandMutation implements EvolutionaryOperator<BasicGenome> {
 
 
     @Override
-    public List<BasicGenome> apply(List<BasicGenome> list, Random random) {
-        return list;
+    public List<BasicGenome> apply(List<BasicGenome> chromosome, Random random) {
+
+        List<BasicGenome> result = new ArrayList<>();
+
+        //Calculating available facilities in this chromosome
+        List<String> facilities = getAvailableFacilities(chromosome);
+
+        for (BasicGenome genome : chromosome) {
+            if (mutationProbability.nextValue().nextEvent(random)) {
+                result.add(mutateGenome(genome, facilities, random));
+            } else {
+                result.add(genome);
+            }
+        }
+
+        return result;
     }
 
 
-    private BasicGenome mutateTerritory(BasicGenome genome, Random rng) {
+    private BasicGenome mutateGenome(BasicGenome chromosome, List<String> facilities, Random rng) {
 
-        if (mutationProbability.nextValue().nextEvent(rng)) {
-            return genome;
-        } else {
-            return genome;
+        int randomNumber = rng.nextInt(facilities.size());
+        String candidate = facilities.get(randomNumber);
+        chromosome.setFacilityID(candidate);
+        return chromosome;
+    }
+
+
+    private List<String> getAvailableFacilities(List<BasicGenome> chromosome) {
+
+        List<String> facilities = new ArrayList<>();
+        for (BasicGenome genome : chromosome) {
+            if (!facilities.contains(genome.getFacilityID()))
+                facilities.add(genome.getFacilityID());
         }
+        return facilities;
     }
 
 }

@@ -94,8 +94,8 @@ public class OptimizationEngine {
 
         //Running evolutionary algorithm
         List<BasicGenome> result = engine.evolve(
-                100,
-                20,
+                15,
+                7,
                 new Stagnation(500,false)
         );
 
