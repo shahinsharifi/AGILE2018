@@ -34,20 +34,22 @@ public class FacilityMutation implements EvolutionaryOperator<BasicGenome> {
     @Override
     public List<BasicGenome> apply(List<BasicGenome> chromosome, Random random) {
 
-        List<BasicGenome> result = new ArrayList<>();
-
-        //Calculating available facilities in this chromosome
-       // List<String> facilities = getAvailableFacilities(chromosome);
+        //  List<BasicGenome> result = new ArrayList<>();
 
         for (BasicGenome genome : chromosome) {
             if (mutationProbability.nextValue().nextEvent(random)) {
-                result.add(mutateGenome(chromosome, genome, random));
-            } else {
-                result.add(genome);
+                long beforeCost = calculateTotalCost(chromosome);
+                //result.add(mutateGenome(chromosome, genome, random));
+                String beforeFid = genome.getFacilityID();
+                String afterFid = mutateGenome(chromosome, genome, random).getFacilityID();
+                genome.setFacilityID(afterFid);
+                long afterCost = calculateTotalCost(chromosome);
+                if (afterCost > beforeCost)
+                    genome.setFacilityID(beforeFid);
             }
         }
 
-        return result;
+        return chromosome;
     }
 
 
@@ -63,15 +65,25 @@ public class FacilityMutation implements EvolutionaryOperator<BasicGenome> {
     }
 
 
-    private List<String> getAvailableFacilities(List<BasicGenome> chromosome) {
 
-        List<String> facilities = new ArrayList<>();
-        for (BasicGenome genome : chromosome) {
-            if (!facilities.contains(genome.getFacilityID()))
-                facilities.add(genome.getFacilityID());
+
+    private long calculateTotalCost(List<BasicGenome> chromosome) {
+
+        long totalCost = 0;
+        for(Municipality municipality: municipalities) {
+            Long minDistance = Long.MAX_VALUE;
+            for (BasicGenome genome : chromosome) {
+                Long distance = (Long) dMatrix.get(municipality.getMunId(), genome.getFacilityID());
+                if(distance == null) {
+                    minDistance = 0l;
+                }else if (distance < minDistance) {
+                    minDistance = distance;
+                }
+            }
+            totalCost += minDistance;
         }
-        return facilities;
-    }
 
+        return totalCost;
+    }
 
 }

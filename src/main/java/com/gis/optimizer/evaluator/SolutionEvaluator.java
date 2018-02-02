@@ -28,7 +28,7 @@ public class SolutionEvaluator implements FitnessEvaluator<List<BasicGenome>> {
         double totalCost = 0;
         try {
             for (Municipality municipality : municipalities) {
-                totalCost += municipality.getWeight() * getNearestFacilityDistance(basicGenomes, municipality.getMunId());
+                totalCost += getNearestFacilityDistance(basicGenomes, municipality.getMunId());
             }
         } catch (Exception ex) {
             LOGGER.error(ex.toString());

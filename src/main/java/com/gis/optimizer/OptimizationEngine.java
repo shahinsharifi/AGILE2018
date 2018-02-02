@@ -70,7 +70,7 @@ public class OptimizationEngine {
 
         //Configuration of selection strategy
         SelectionStrategy<Object> selection = new TournamentSelection(
-                new AdjustableNumberGenerator<>(new Probability(0.99d))
+                new AdjustableNumberGenerator<>(new Probability(0.5d))
         );
 
 
@@ -99,8 +99,8 @@ public class OptimizationEngine {
 
         //Running evolutionary algorithm
         List<BasicGenome> locations = engine.evolve(
-                20,
-                5,
+                15,
+                7,
                 new Stagnation(2000, false)
         );
 
