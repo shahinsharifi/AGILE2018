@@ -8,6 +8,10 @@ public class BasicGenome implements Comparable<BasicGenome>
     private Long weight;
 
 
+    public BasicGenome(String facilityID) {
+        this.facilityID = facilityID;
+    }
+
     public BasicGenome(String demandID, String facilityID, Long weight) {
         this.demandID = demandID;
         this.facilityID = facilityID;
@@ -43,6 +47,18 @@ public class BasicGenome implements Comparable<BasicGenome>
     @Override
     public int compareTo(BasicGenome t) {
         return this.getDemandID().compareTo(t.getDemandID());
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        boolean isSame = false;
+
+        if (object != null && object instanceof BasicGenome)
+        {
+            isSame = this.facilityID.equals(((BasicGenome) object).facilityID);
+        }
+
+        return isSame;
     }
 
 }

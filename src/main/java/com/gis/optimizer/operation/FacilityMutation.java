@@ -7,6 +7,7 @@ import org.uncommons.maths.number.NumberGenerator;
 import org.uncommons.maths.random.Probability;
 import org.uncommons.watchmaker.framework.EvolutionaryOperator;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -29,19 +30,48 @@ public class FacilityMutation implements EvolutionaryOperator<BasicGenome> {
     }
 
 
+
     @Override
-    public List<BasicGenome> apply(List<BasicGenome> list, Random random) {
-        return list;
-    }
+    public List<BasicGenome> apply(List<BasicGenome> chromosome, Random random) {
 
+        List<BasicGenome> result = new ArrayList<>();
 
-    private BasicGenome mutateTerritory(BasicGenome genome, Random rng) {
+        //Calculating available facilities in this chromosome
+       // List<String> facilities = getAvailableFacilities(chromosome);
 
-        if (mutationProbability.nextValue().nextEvent(rng)) {
-            return genome;
-        } else {
-            return genome;
+        for (BasicGenome genome : chromosome) {
+            if (mutationProbability.nextValue().nextEvent(random)) {
+                result.add(mutateGenome(chromosome, genome, random));
+            } else {
+                result.add(genome);
+            }
         }
+
+        return result;
     }
+
+
+    private BasicGenome mutateGenome(List<BasicGenome> chromosome, BasicGenome gene, Random rng) {
+
+        int randomNumber = rng.nextInt(municipalities.size());
+        String candidate = municipalities.get(randomNumber).getMunId();
+        BasicGenome testGenome = new BasicGenome(candidate);
+        if(!chromosome.contains(testGenome))
+            gene.setFacilityID(candidate);
+
+        return gene;
+    }
+
+
+    private List<String> getAvailableFacilities(List<BasicGenome> chromosome) {
+
+        List<String> facilities = new ArrayList<>();
+        for (BasicGenome genome : chromosome) {
+            if (!facilities.contains(genome.getFacilityID()))
+                facilities.add(genome.getFacilityID());
+        }
+        return facilities;
+    }
+
 
 }

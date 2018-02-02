@@ -21,8 +21,8 @@ public class CrossOver<T> extends AbstractCrossover<List<T>> {
                                  Random rng) {
 
 
-        Collections.sort(parent1, new CustomComparator());
-        Collections.sort(parent2, new CustomComparator());
+    //    Collections.sort(parent1, new CustomComparator());
+     //   Collections.sort(parent2, new CustomComparator());
 
 
         for (int i = 0; i < numberOfCrossoverPoints; i++) {

@@ -1,8 +1,10 @@
 package com.gis.optimizer;
 
 import com.gis.config.DmatrixConfiguration;
+import com.gis.database.model.Facility;
 import com.gis.database.model.Municipality;
 import com.gis.database.model.Pmedian;
+import com.gis.database.service.facility.FacilityServiceImpl;
 import com.gis.database.service.municipality.MunicipalityServiceImpl;
 import com.gis.database.service.pmedian.PmedianService;
 import com.gis.database.service.pmedian.PmedianServiceImpl;
@@ -44,6 +46,9 @@ public class OptimizationEngine {
     @Autowired
     private PmedianServiceImpl pmedianService;
 
+    @Autowired
+    private FacilityServiceImpl facilityService;
+
 
     public boolean evolve() throws Exception {
 
@@ -52,7 +57,7 @@ public class OptimizationEngine {
         List<Municipality> municipalities = municipalityService.getAll();
         LOGGER.info("Municipalities are loaded...");
 
-        List<Municipality> initialSeed = getRandomInitialSeed(rng,municipalities, 20);
+        List<Municipality> initialSeed = getRandomInitialSeed(rng, municipalities, 20);
 
         Table distanceMatrix = DmatrixConfiguration.getDistanceMatrix();
 
@@ -75,7 +80,7 @@ public class OptimizationEngine {
 
 
         //Configuration of solution evaluator
-        SolutionEvaluator evaluator = new SolutionEvaluator(distanceMatrix);
+        SolutionEvaluator evaluator = new SolutionEvaluator(municipalities, distanceMatrix);
 
 
         //Instantiation of evolutionary engine
@@ -93,30 +98,43 @@ public class OptimizationEngine {
 
 
         //Running evolutionary algorithm
-        List<BasicGenome> result = engine.evolve(
-                15,
-                7,
-                new Stagnation(500,false)
+        List<BasicGenome> locations = engine.evolve(
+                20,
+                5,
+                new Stagnation(2000, false)
         );
 
 
+
         //Cleaning up database
-        pmedianService.deleteAll();
         LOGGER.info("Cleaning up database...");
+        pmedianService.deleteAll();
+        facilityService.deleteAll();
+
 
         //Inserting result into the database
-        LOGGER.info("Adding result to the database...");
-        for(BasicGenome genome: result){
+        LOGGER.info("Adding location result to the database...");
+        for (BasicGenome genome : locations) {
+            Facility facility = new Facility();
+            facility.setFacilityId(genome.getFacilityID());
+            facilityService.insert(facility);
+        }
+
+        List<BasicGenome> allocations = getNearestFacility(distanceMatrix, municipalities, locations);
+
+
+        LOGGER.info("Adding allocation result to the database...");
+        for (BasicGenome genome : allocations) {
             Pmedian pmedian = new Pmedian();
             pmedian.setDemandId(genome.getDemandID());
             pmedian.setFacilityId(genome.getFacilityID());
             pmedianService.insert(pmedian);
         }
 
-        calculateFacilityCapacity(result);
+       // calculateFacilityCapacity(result);
         LOGGER.info("End of processing ...");
 
-        return result.size() > 0;
+        return locations.size() > 0;
     }
 
 
@@ -153,6 +171,29 @@ public class OptimizationEngine {
         for(String str: result.keySet()){
             LOGGER.info(str + " -> " + result.get(str));
         }
+    }
+
+
+    private List<BasicGenome> getNearestFacility(Table distanceMatrix, List<Municipality> municipalities, List<BasicGenome> chromosome) {
+
+        List<BasicGenome> result = new ArrayList<>();
+
+        for(Municipality municipality: municipalities) {
+            Long minDistance = Long.MAX_VALUE;
+            String minMunID = "";
+            for (BasicGenome genome : chromosome) {
+                Long distance = (Long) distanceMatrix.get(municipality.getMunId(), genome.getFacilityID());
+                if(distance == null) {
+                    minMunID = municipality.getMunId();
+                    minDistance = 0l;
+                }else if (distance < minDistance) {
+                    minMunID = genome.getFacilityID();
+                    minDistance = distance;
+                }
+            }
+            result.add(new BasicGenome(municipality.getMunId(), minMunID,0l));
+        }
+        return result;
     }
 
 }

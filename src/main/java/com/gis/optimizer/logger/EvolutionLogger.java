@@ -17,8 +17,8 @@ public class EvolutionLogger<T> implements IslandEvolutionObserver<T> {
 
     public void populationUpdate(PopulationData<? extends T> data) {
         try {
-
-            Logger.info("Generation " + data.getGenerationNumber() + ": " + data.getBestCandidateFitness());
+            if(data.getGenerationNumber() % 200 == 0)
+                Logger.info("Generation " + data.getGenerationNumber() + ": " + data.getBestCandidateFitness());
 
         } catch (Exception ex) {
             Logger.error(ex.toString());

@@ -4,6 +4,7 @@ import com.gis.database.model.Municipality;
 import com.gis.optimizer.model.BasicGenome;
 import com.gis.optimizer.operation.CrossOver;
 import com.gis.optimizer.operation.DemandMutation;
+import com.gis.optimizer.operation.FacilityMutation;
 import com.google.common.collect.Table;
 import org.uncommons.maths.number.AdjustableNumberGenerator;
 import org.uncommons.maths.number.ConstantGenerator;
@@ -38,8 +39,8 @@ public class OperationFactory {
         //Installing mutation operator
         operators.add(
                 new ListOperator<>(
-                        new DemandMutation(
-                                new AdjustableNumberGenerator<>(new Probability(0.00001d)),
+                        new FacilityMutation(
+                                new AdjustableNumberGenerator<>(new Probability(0.00005d)),
                                 new GaussianGenerator(0, 3, rng),
                                 municipalities,
                                 dMatrix
