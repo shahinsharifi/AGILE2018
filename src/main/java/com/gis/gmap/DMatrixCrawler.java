@@ -5,6 +5,7 @@ import com.gis.database.model.Dmatrix;
 import com.gis.database.model.Municipality;
 import com.gis.database.service.dmatrix.DmatrixServiceImpl;
 import com.gis.database.service.municipality.MunicipalityServiceImpl;
+import com.gis.optimizer.OptimizationEngine;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.maps.DirectionsApi;
@@ -12,8 +13,11 @@ import com.google.maps.DistanceMatrixApi;
 import com.google.maps.GeoApiContext;
 import com.google.maps.model.*;
 import org.joda.time.DateTime;
+import org.joda.time.ReadableInstant;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -27,6 +31,9 @@ public class DMatrixCrawler {
     private DateTimeFormatter parser;
 
     private static GeoApiContext context;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DMatrixCrawler.class);
+
 
 
     @Autowired
@@ -47,115 +54,98 @@ public class DMatrixCrawler {
 
     public void getDistanceMatrix(LatLng origin, LatLng[] destination, String[] timeSeries) {
 
-        DateTime date;
-        DistanceMatrix distanceMatrix;
-        List<DistanceMatrixRow> rows = new ArrayList<>();
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        DateTimeFormatter parser = ISODateTimeFormat.dateTimeParser();
+        List<String> lookupList = new ArrayList<>();
 
         try {
 
-          /*  List<Municipality> municipalities = municipalityService.getAll();
-
-            LatLng[] latLngs = new LatLng[100];
-            for(int i=0; i<100;i++) {
-                Municipality mun = municipalities.get(i);
-                LatLng latLng = new LatLng();
-                latLng.lng = mun.getX();
-                latLng.lat = mun.getY();
-                latLngs[i] = latLng;
-            }
-
-            for(Municipality municipality:municipalities){
-
-            }
-
-
-            callRemoteMatrixCalculator(timeSeries,origin,latLngs);
-*/
-
             List<Municipality> municipalities = municipalityService.getAll();
-            Municipality municipality1 = municipalities.get(0);
-            Municipality municipality2 = municipalities.get(municipalities.size()-100);
 
-            LatLng latLng = new LatLng();
-            latLng.lng = municipality1.getX();
-            latLng.lat = municipality1.getY();
-
-            LatLng[] latLngs = new LatLng[1];
-            LatLng latLng2 = new LatLng();
-            latLng2.lng = municipality2.getX();
-            latLng2.lat = municipality2.getY();
-            latLngs[0] = latLng2;
-
-            Map<String, Long> elementData = new HashMap<>();
-
-            int index = 1;
-            for (String dateTime : timeSeries) {
-
-                date = parser.parseDateTime(dateTime);
-
-                distanceMatrix = DistanceMatrixApi.newRequest(context)
-                        .origins(latLng)
-                        .destinations(latLngs)
-                        .mode(TravelMode.DRIVING)
-                        .avoid(DirectionsApi.RouteRestriction.TOLLS)
-                        .units(Unit.METRIC)
-                        .departureTime(date)
-                        .await();
-
-
-                rows.addAll(Arrays.asList(distanceMatrix.rows));
-
-                DistanceMatrixElement element = distanceMatrix.rows[0].elements[0];
-
-                elementData.put("t" + index, element.durationInTraffic.inSeconds);
-
-                if(!elementData.containsKey("d"))
-                    elementData.put("d", element.distance.inMeters);
-
-                index++;
+            List<Dmatrix> distanceMatrixList = dmatrixManagerService.getAll();
+            for (Dmatrix dmatrix : distanceMatrixList) {
+                lookupList.add(dmatrix.getStartNodeId() + "|" + dmatrix.getEndNodeId());
             }
 
-            Dmatrix dmatrix = new Dmatrix();
+            for (Municipality municipality : municipalities) {
 
-            dmatrix.setStartNodeId(municipality1.getMunId());
-            dmatrix.setEndNodeId(municipality2.getMunId());
+                for (Municipality municipality2 : municipalities) {
 
-            dmatrix.setDistance(elementData.get("d"));
+                    if (!municipality.getMunId().equals(municipality2.getMunId()) &&
+                            !lookupList.contains(municipality.getMunId() + "|" + municipality2.getMunId())) {
 
-            dmatrix.setMon7(elementData.get("t1"));
-            dmatrix.setMon12(elementData.get("t2"));
-            dmatrix.setMon17(elementData.get("t3"));
+                        //Origin
+                        LatLng origin1 = new LatLng();
+                        origin1.lng = municipality.getX();
+                        origin1.lat = municipality.getY();
 
-            dmatrix.setWed7(elementData.get("t4"));
-            dmatrix.setWed12(elementData.get("t5"));
-            dmatrix.setWed17(elementData.get("t6"));
+                        //Destination
+                        LatLng[] destinations = new LatLng[1];
+                        LatLng destination1 = new LatLng();
+                        destination1.lng = municipality2.getX();
+                        destination1.lat = municipality2.getY();
+                        destinations[0] = destination1;
 
-            dmatrix.setFri7(elementData.get("t7"));
-            dmatrix.setFri12(elementData.get("t8"));
-            dmatrix.setFri17(elementData.get("t9"));
+                        Map<String, Object> distanceData = callRemoteMatrixCalculator(
+                                timeSeries,
+                                origin1,
+                                destinations
+                        );
 
-            dmatrixManagerService.insert(dmatrix);
+                        if (distanceData.size() > 0) {
+
+                            Dmatrix dmatrix = new Dmatrix();
+                            Dmatrix dmatrix2 = new Dmatrix();
+
+                            dmatrix.setDistance((Long) distanceData.get("distance"));
+                            dmatrix.setDuration((Long) distanceData.get("duration"));
+
+                            dmatrix.setMon7((Long) distanceData.get("t1"));
+                            dmatrix.setMon12((Long) distanceData.get("t2"));
+                            dmatrix.setMon17((Long) distanceData.get("t3"));
+
+                            dmatrix.setStartNodeId(municipality.getMunId());
+                            dmatrix.setEndNodeId(municipality2.getMunId());
+
+                            dmatrixManagerService.insert(dmatrix);
+
+                            dmatrix2.setStartNodeId(municipality2.getMunId());
+                            dmatrix2.setEndNodeId(municipality.getMunId());
+                            dmatrix2.setDistance((Long) distanceData.get("distance"));
+                            dmatrix2.setDuration((Long) distanceData.get("duration"));
+
+                            dmatrix2.setMon7((Long) distanceData.get("t1"));
+                            dmatrix2.setMon12((Long) distanceData.get("t2"));
+                            dmatrix2.setMon17((Long) distanceData.get("t3"));
+
+                            dmatrixManagerService.insert(dmatrix2);
 
 
+                            lookupList.add(municipality.getMunId() + "|" + municipality2.getMunId());
+                            lookupList.add(municipality2.getMunId() + "|" + municipality.getMunId());
+                        }
+                    }
+                }
+
+                LOGGER.info(municipality.getMunId() + "->" + lookupList.size());
+            }
 
         } catch (Exception ex) {
-            System.out.println(ex.toString());
+            LOGGER.error(ex.toString());
         } finally {
-            System.out.println(gson.toJson(rows));
+            LOGGER.info(lookupList.size() + " travel times have been calculated ...");
         }
     }
 
 
-    private List<Map<String,Object>> callRemoteMatrixCalculator(String[] timeSeries, LatLng origin, LatLng[] destinations) throws Exception{
+    private Map<String, Object> callRemoteMatrixCalculator(String[] timeSeries, LatLng origin, LatLng[] destinations) throws Exception {
 
-        DateTime date;
+        ReadableInstant date;
         DistanceMatrix distanceMatrix;
-        List<Map<String,Object>> elementData = new ArrayList<>();
+        Map<String, Object> data = new HashMap<>();
 
 
         int index = 1;
+        long distance = 0l;
+        long duration = 0l;
         for (String dateTime : timeSeries) {
 
             date = parser.parseDateTime(dateTime);
@@ -170,11 +160,22 @@ public class DMatrixCrawler {
                     .await();
 
             DistanceMatrixElement[] distanceMatrixElements = distanceMatrix.rows[0].elements;
-            for(DistanceMatrixElement element: distanceMatrixElements){
+            for (DistanceMatrixElement element : distanceMatrixElements) {
+                if (element.status == DistanceMatrixElementStatus.OK) {
+                    data.put("t" + index, element.durationInTraffic.inSeconds);
 
+                    distance = element.distance.inMeters;
+                    duration = element.duration.inSeconds;
+                }
             }
+            index++;
         }
 
-        return elementData;
+        if(distance != 0 && duration != 0) {
+            data.put("duration", duration);
+            data.put("distance", distance);
+        }
+
+        return data;
     }
 }

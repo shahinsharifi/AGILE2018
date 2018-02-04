@@ -9,6 +9,7 @@ public class Dmatrix {
     private String startNodeId;
     private String endNodeId;
     private Long distance;
+    private Long duration;
     private Long mon7;
     private Long mon12;
     private Long mon17;
@@ -48,6 +49,16 @@ public class Dmatrix {
 
     public void setEndNodeId(String endNodeId) {
         this.endNodeId = endNodeId;
+    }
+
+    @Basic
+    @Column(name = "duration")
+    public Long getDuration() {
+        return duration;
+    }
+
+    public void setDuration(Long duration) {
+        this.duration = duration;
     }
 
     @Basic
