@@ -13,7 +13,7 @@ public class Main {
 	public static void main(String[] args) {
 
 		ApplicationContext ctx = SpringApplication.run(Main.class, args);
-		executeOptimization(ctx);
+		executeOptimization(ctx,args);
 	}
 
 
@@ -39,12 +39,15 @@ public class Main {
 	}
 
 
-	private static void executeOptimization(ApplicationContext ctx) {
+	private static void executeOptimization(ApplicationContext ctx, String[] args) {
 
 		try {
 
 			OptimizationEngine optimizationEngine = ctx.getBean(OptimizationEngine.class);
-			optimizationEngine.evolve();
+			int initialSeedSize = 20;
+			if(args.length > 0)
+				initialSeedSize = Integer.parseInt(args[0]);
+			optimizationEngine.evolve(initialSeedSize);
 
 		} catch (Exception ex) {
 			System.out.println(ex.toString());

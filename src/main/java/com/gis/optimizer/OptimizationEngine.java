@@ -50,14 +50,15 @@ public class OptimizationEngine {
     private FacilityServiceImpl facilityService;
 
 
-    public boolean evolve() throws Exception {
+    public boolean evolve(int seedSize) throws Exception {
 
         rng = new XORShiftRNG();
 
         List<Municipality> municipalities = municipalityService.getAll();
         LOGGER.info("Municipalities are loaded...");
 
-        List<Municipality> initialSeed = getRandomInitialSeed(rng, municipalities, 20);
+        List<Municipality> initialSeed = getRandomInitialSeed(rng, municipalities, seedSize);
+        LOGGER.info("Initial seed with size '" + seedSize + "' has been created...");
 
         Table distanceMatrix = DmatrixConfiguration.getDistanceMatrix();
 

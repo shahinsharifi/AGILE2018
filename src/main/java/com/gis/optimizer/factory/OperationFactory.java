@@ -40,7 +40,7 @@ public class OperationFactory {
         operators.add(
                 new ListOperator<>(
                         new FacilityMutation(
-                                new AdjustableNumberGenerator<>(new Probability(0.005d)),
+                                new AdjustableNumberGenerator<>(new Probability(0.05d)),
                                 new GaussianGenerator(0, 3, rng),
                                 municipalities,
                                 dMatrix
