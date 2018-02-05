@@ -102,7 +102,7 @@ public class OptimizationEngine {
         List<BasicGenome> locations = engine.evolve(
                 15,
                 7,
-                new Stagnation(2000, false)
+                new Stagnation(1000, false)
         );
 
 

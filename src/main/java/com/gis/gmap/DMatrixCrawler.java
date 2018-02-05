@@ -52,7 +52,7 @@ public class DMatrixCrawler {
     }
 
 
-    public void getDistanceMatrix(LatLng origin, LatLng[] destination, String[] timeSeries) {
+    public void getDistanceMatrix(String[] timeSeries) {
 
         List<String> lookupList = new ArrayList<>();
 
@@ -90,10 +90,9 @@ public class DMatrixCrawler {
                                 destinations
                         );
 
-                        if (distanceData.size() > 0) {
+                        if (distanceData.size() > 1) {
 
                             Dmatrix dmatrix = new Dmatrix();
-                            Dmatrix dmatrix2 = new Dmatrix();
 
                             dmatrix.setDistance((Long) distanceData.get("distance"));
                             dmatrix.setDuration((Long) distanceData.get("duration"));
@@ -107,6 +106,8 @@ public class DMatrixCrawler {
 
                             dmatrixManagerService.insert(dmatrix);
 
+                            Dmatrix dmatrix2 = new Dmatrix();
+
                             dmatrix2.setStartNodeId(municipality2.getMunId());
                             dmatrix2.setEndNodeId(municipality.getMunId());
                             dmatrix2.setDistance((Long) distanceData.get("distance"));
@@ -118,6 +119,25 @@ public class DMatrixCrawler {
 
                             dmatrixManagerService.insert(dmatrix2);
 
+
+                            lookupList.add(municipality.getMunId() + "|" + municipality2.getMunId());
+                            lookupList.add(municipality2.getMunId() + "|" + municipality.getMunId());
+
+                        } else {
+
+                            Dmatrix dmatrix = new Dmatrix();
+                            Dmatrix dmatrix2 = new Dmatrix();
+
+                            dmatrix.setStartNodeId(municipality2.getMunId());
+                            dmatrix.setEndNodeId(municipality.getMunId());
+                            dmatrix.setDistance(-1l);
+
+                            dmatrix2.setStartNodeId(municipality.getMunId());
+                            dmatrix2.setEndNodeId(municipality2.getMunId());
+                            dmatrix2.setDistance(-1l);
+
+                            dmatrixManagerService.insert(dmatrix);
+                            dmatrixManagerService.insert(dmatrix2);
 
                             lookupList.add(municipality.getMunId() + "|" + municipality2.getMunId());
                             lookupList.add(municipality2.getMunId() + "|" + municipality.getMunId());
@@ -166,6 +186,8 @@ public class DMatrixCrawler {
 
                     distance = element.distance.inMeters;
                     duration = element.duration.inSeconds;
+                }else{
+                    data.put("status",element.status);
                 }
             }
             index++;

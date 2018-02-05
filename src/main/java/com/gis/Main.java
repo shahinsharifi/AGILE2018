@@ -32,14 +32,7 @@ public class Main {
 				"2018-03-05T07:00:00.045Z", "2018-03-07T11:00:00.045Z", "2018-03-09T17:00:00.045Z"
 		};
 
-
-		LatLng origin = new LatLng(52.156274, 4.492423);
-		LatLng[] destinations = new LatLng[]{
-				new LatLng(52.033926, 4.259178)
-				//TODO: to be added. Max = 25 points
-		};
-
-		matrixCrawler.getDistanceMatrix(origin, destinations, timeSeries);
+		matrixCrawler.getDistanceMatrix(timeSeries);
 	}
 
 
