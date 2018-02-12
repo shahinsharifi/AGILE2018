@@ -1,5 +1,6 @@
 package com.gis.optimizer.operation;
 
+import com.gis.database.model.Dmatrix;
 import com.gis.database.model.Municipality;
 import com.gis.optimizer.model.BasicGenome;
 import com.google.common.collect.Table;
@@ -71,16 +72,21 @@ public class FacilityMutation implements EvolutionaryOperator<BasicGenome> {
 
         long totalCost = 0;
         for(Municipality municipality: municipalities) {
-            Long minDistance = Long.MAX_VALUE;
+            Long minCost = Long.MAX_VALUE;
             for (BasicGenome genome : chromosome) {
-                Long distance = (Long) dMatrix.get(municipality.getMunId(), genome.getFacilityID());
-                if(distance == null) {
-                    minDistance = 0l;
-                }else if (distance < minDistance) {
-                    minDistance = distance;
-                }
+                List<Long> travelTimes = (List<Long>) dMatrix.get(municipality.getMunId(), genome.getFacilityID());
+                if(travelTimes != null && travelTimes.size() > 0) {
+                    for (Long travelTime : travelTimes) {
+                        if (travelTime == null) {
+                            minCost = 0l;
+                        } else if (travelTime < minCost) {
+                            minCost = travelTime;
+                        }
+                    }
+                }else
+                    minCost = 0l;
             }
-            totalCost += minDistance;
+            totalCost += minCost;
         }
 
         return totalCost;

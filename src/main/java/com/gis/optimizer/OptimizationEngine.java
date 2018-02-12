@@ -13,6 +13,7 @@ import com.gis.optimizer.factory.OperationFactory;
 import com.gis.optimizer.factory.PopulationFactory;
 import com.gis.optimizer.logger.EvolutionLogger;
 import com.gis.optimizer.model.BasicGenome;
+import com.gis.optimizer.util.FileUtils;
 import com.google.common.collect.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,9 +101,10 @@ public class OptimizationEngine {
 
         //Running evolutionary algorithm
         List<BasicGenome> locations = engine.evolve(
-                15,
-                7,
-                new Stagnation(1000, false)
+                100,
+                20,
+               new GenerationCount(30000)
+               // new Stagnation(1000, false)
         );
 
 
@@ -134,6 +136,7 @@ public class OptimizationEngine {
 
        // calculateFacilityCapacity(result);
         LOGGER.info("End of processing ...");
+        FileUtils.printAlgorithmProgress(EvolutionLogger.getProgress() , "progress");
 
         return locations.size() > 0;
     }
@@ -180,16 +183,23 @@ public class OptimizationEngine {
         List<BasicGenome> result = new ArrayList<>();
 
         for(Municipality municipality: municipalities) {
-            Long minDistance = Long.MAX_VALUE;
+            Long minCost = Long.MAX_VALUE;
             String minMunID = "";
             for (BasicGenome genome : chromosome) {
-                Long distance = (Long) distanceMatrix.get(municipality.getMunId(), genome.getFacilityID());
-                if(distance == null) {
+                List<Long> travelTimes = (List<Long>)  distanceMatrix.get(municipality.getMunId(), genome.getFacilityID());
+                if(travelTimes!= null && travelTimes.size() > 0) {
+                    for (Long travelTime : travelTimes) {
+                        if (travelTime == null) {
+                            minCost = 0l;
+                            minMunID = municipality.getMunId();
+                        } else if (travelTime < minCost) {
+                            minMunID = genome.getFacilityID();
+                            minCost = travelTime;
+                        }
+                    }
+                }else {
                     minMunID = municipality.getMunId();
-                    minDistance = 0l;
-                }else if (distance < minDistance) {
-                    minMunID = genome.getFacilityID();
-                    minDistance = distance;
+                    minCost = 0l;
                 }
             }
             result.add(new BasicGenome(municipality.getMunId(), minMunID,0l));

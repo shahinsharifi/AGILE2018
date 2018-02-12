@@ -3,6 +3,7 @@ package com.gis.database.model;
 import javax.persistence.*;
 
 @Entity
+//@Table(name = "dmatrix3", schema = "public", catalog = "poi")
 public class Dmatrix {
 
     private int id;

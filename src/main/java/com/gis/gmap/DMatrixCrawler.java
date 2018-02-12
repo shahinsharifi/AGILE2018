@@ -54,6 +54,7 @@ public class DMatrixCrawler {
 
     public void getDistanceMatrix(String[] timeSeries) {
 
+        int retryIndex = 1;
         List<String> lookupList = new ArrayList<>();
 
         try {
@@ -150,6 +151,10 @@ public class DMatrixCrawler {
 
         } catch (Exception ex) {
             LOGGER.error(ex.toString());
+            if(retryIndex<= 10){
+                getDistanceMatrix(timeSeries);
+                retryIndex++;
+            }
         } finally {
             LOGGER.info(lookupList.size() + " travel times have been calculated ...");
         }

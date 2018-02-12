@@ -3,6 +3,7 @@ package com.gis.config;
 
 import com.gis.database.model.Dmatrix;
 import com.gis.database.service.dmatrix.DmatrixServiceImpl;
+import com.gis.optimizer.math.Statistics;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import org.slf4j.Logger;
@@ -13,6 +14,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.annotation.PropertySources;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Configuration
@@ -25,7 +27,7 @@ public class DmatrixConfiguration {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DmatrixConfiguration.class);
 
-    private final static Table<String, String, Long> distanceMatrix = HashBasedTable.create();
+    private final static Table<String, String, List<Long>> distanceMatrix = HashBasedTable.create();
 
 
     @Bean
@@ -34,14 +36,26 @@ public class DmatrixConfiguration {
         List<Dmatrix> dmatrix = dmatrixManagerService.getAll();
         LOGGER.info("Distances are loaded...");
 
+        List<Double> sDeviations = new ArrayList<>();
+
         LOGGER.info("Start initializing distance table...");
         for(Dmatrix distance: dmatrix){
-            if(!distance.getStartNodeId().equals(distance.getEndNodeId()))
-                distanceMatrix.put(distance.getStartNodeId(),distance.getEndNodeId(),distance.getDistance());
+            if(!distance.getStartNodeId().equals(distance.getEndNodeId())) {
+                List<Long> travelTimes = new ArrayList<Long>() {{
+                    add(distance.getMon7());
+                    add(distance.getMon12());
+                    add(distance.getMon17());
+                }};
+                distanceMatrix.put(distance.getStartNodeId(), distance.getEndNodeId(), travelTimes);
+                Statistics statistics = new Statistics(travelTimes);
+                double sdv = statistics.calculateStandardDeviation();
+                sDeviations.add(sdv);
+            }
         }
         LOGGER.info("Distance table is initialized...");
 
-
+        Statistics statistics = new Statistics(sDeviations);
+        LOGGER.info("Mean is: " + statistics.calculateMean());
         LOGGER.info("Destroying the initial distance matrix...");
         dmatrix.clear();
 

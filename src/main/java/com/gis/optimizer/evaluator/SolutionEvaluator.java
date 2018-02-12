@@ -34,6 +34,7 @@ public class SolutionEvaluator implements FitnessEvaluator<List<BasicGenome>> {
                     totalCost += demandWeight * distanceCost;
             }
         } catch (Exception ex) {
+            ex.printStackTrace();
             LOGGER.error(ex.toString());
         }
         /*try {
@@ -52,17 +53,22 @@ public class SolutionEvaluator implements FitnessEvaluator<List<BasicGenome>> {
 
     private long getNearestFacilityDistance(List<BasicGenome> chromosome, String demandID) {
 
-        Long minDistance = Long.MAX_VALUE;
+        Long minCost = Long.MAX_VALUE;
         for (BasicGenome genome : chromosome) {
-            Long distance = (Long) distanceMatrix.get(demandID, genome.getFacilityID());
-            if(distance == null) {
-                minDistance = 0l;
-            }else if (distance < minDistance) {
-                minDistance = distance;
-            }
+            List<Long> travelTimes = (List<Long>) distanceMatrix.get(demandID, genome.getFacilityID());
+            if(travelTimes!= null && travelTimes.size() > 0) {
+                for (Long travelTime : travelTimes) {
+                    if (travelTime == null) {
+                        minCost = 0l;
+                    } else if (travelTime < minCost) {
+                        minCost = travelTime;
+                    }
+                }
+            }else
+                minCost = 0l;
         }
 
-        return minDistance;
+        return minCost;
     }
 
 
