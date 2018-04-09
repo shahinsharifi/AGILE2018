@@ -86,7 +86,7 @@ public class FacilityMutation implements EvolutionaryOperator<BasicGenome> {
                 }else
                     minCost = 0l;
             }
-            totalCost += minCost;
+            totalCost += minCost * municipality.getWeight();
         }
 
         return totalCost;

@@ -15,6 +15,7 @@ import com.gis.optimizer.logger.EvolutionLogger;
 import com.gis.optimizer.model.BasicGenome;
 import com.gis.optimizer.util.FileUtils;
 import com.google.common.collect.Table;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,7 @@ import org.uncommons.watchmaker.framework.termination.GenerationCount;
 import org.uncommons.watchmaker.framework.termination.Stagnation;
 import org.uncommons.watchmaker.framework.termination.TargetFitness;
 
+import javax.persistence.criteria.CriteriaBuilder;
 import java.util.*;
 
 
@@ -98,15 +100,15 @@ public class OptimizationEngine {
         engine.addEvolutionObserver(new EvolutionLogger<>(1));
         engine.setSingleThreaded(false);
 
-
+        long start = System.currentTimeMillis();
         //Running evolutionary algorithm
         List<BasicGenome> locations = engine.evolve(
                 100,
-                20,
-               new GenerationCount(30000)
-               // new Stagnation(1000, false)
+                50,
+             //  new GenerationCount(500)
+                new Stagnation(2000, false)
         );
-
+        long end = System.currentTimeMillis();
 
 
         //Cleaning up database
@@ -134,9 +136,10 @@ public class OptimizationEngine {
             pmedianService.insert(pmedian);
         }
 
-       // calculateFacilityCapacity(result);
+        calculateFacilityCapacity(allocations, seedSize);
         LOGGER.info("End of processing ...");
-        FileUtils.printAlgorithmProgress(EvolutionLogger.getProgress() , "progress");
+        LOGGER.info("Exe. time: " + (end - start)/1000);
+        FileUtils.printAlgorithmProgress(EvolutionLogger.getProgress() , "progress1" + seedSize);
 
         return locations.size() > 0;
     }
@@ -162,32 +165,43 @@ public class OptimizationEngine {
     }
 
 
-    private void calculateFacilityCapacity(List<BasicGenome> genomes){
+    private void calculateFacilityCapacity(List<BasicGenome> genomes, int seedSize) {
 
-        Map<String,Integer> result = new HashMap<>();
-        for(BasicGenome genome: genomes){
-            if(result.containsKey(genome.getFacilityID())){
-                result.put(genome.getFacilityID(),result.get(genome.getFacilityID()) + 1);
-            }else
-                result.put(genome.getFacilityID(), 1);
+        Map<String, Map<String, Integer>> result = new HashMap<>();
+        for (BasicGenome genome : genomes) {
+            long timeIndex = genome.getWeight();
+            if(timeIndex>0) {
+                if (result.containsKey(genome.getFacilityID())) {
+                    Map<String, Integer> tmp = result.get(genome.getFacilityID());
+                    if (tmp.containsKey("t" + timeIndex)) {
+                        tmp.put("t" + timeIndex, tmp.get("t" + timeIndex) + 1);
+                        result.put(genome.getFacilityID(), tmp);
+                    } else
+                        tmp.put("t" + timeIndex, 1);
+                } else {
+                    Map<String, Integer> tmp = new HashMap<>();
+                    tmp.put("t" + timeIndex, 1);
+                    result.put(genome.getFacilityID(), tmp);
+                }
+            }
         }
 
-        for(String str: result.keySet()){
-            LOGGER.info(str + " -> " + result.get(str));
-        }
+        FileUtils.printAlgorithmAggregation(result, "aggregation1" + seedSize);
     }
 
 
     private List<BasicGenome> getNearestFacility(Table distanceMatrix, List<Municipality> municipalities, List<BasicGenome> chromosome) {
 
         List<BasicGenome> result = new ArrayList<>();
-
+        long totalCost = 0l;
         for(Municipality municipality: municipalities) {
             Long minCost = Long.MAX_VALUE;
+            long timeIndex = 0;
             String minMunID = "";
             for (BasicGenome genome : chromosome) {
                 List<Long> travelTimes = (List<Long>)  distanceMatrix.get(municipality.getMunId(), genome.getFacilityID());
                 if(travelTimes!= null && travelTimes.size() > 0) {
+                    int counter = 1;
                     for (Long travelTime : travelTimes) {
                         if (travelTime == null) {
                             minCost = 0l;
@@ -195,15 +209,19 @@ public class OptimizationEngine {
                         } else if (travelTime < minCost) {
                             minMunID = genome.getFacilityID();
                             minCost = travelTime;
+                            timeIndex = counter;
                         }
+                        counter++;
                     }
                 }else {
                     minMunID = municipality.getMunId();
                     minCost = 0l;
                 }
             }
-            result.add(new BasicGenome(municipality.getMunId(), minMunID,0l));
+            totalCost += minCost * municipality.getWeight();
+            result.add(new BasicGenome(municipality.getMunId(), minMunID,timeIndex));
         }
+        LOGGER.info("Total Cost -> " + ((long)(totalCost / 60)));
         return result;
     }
 

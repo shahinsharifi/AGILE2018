@@ -20,6 +20,7 @@ public class Dmatrix {
     private Long fri7;
     private Long fri12;
     private Long fri17;
+    private Double euclidean;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -163,4 +164,13 @@ public class Dmatrix {
     }
 
 
+    @Basic
+    @Column(name = "ecludian")
+    public Double getEuclidean() {
+        return euclidean;
+    }
+
+    public void setEuclidean(Double euclidean) {
+        this.euclidean = euclidean;
+    }
 }

@@ -42,9 +42,9 @@ public class DmatrixConfiguration {
         for(Dmatrix distance: dmatrix){
             if(!distance.getStartNodeId().equals(distance.getEndNodeId())) {
                 List<Long> travelTimes = new ArrayList<Long>() {{
-                    add(distance.getMon7());
-                    add(distance.getMon12());
-                    add(distance.getMon17());
+                    add(distance.getEuclidean().longValue());
+                  //  add(distance.getMon12());
+                  //  add(distance.getMon17());
                 }};
                 distanceMatrix.put(distance.getStartNodeId(), distance.getEndNodeId(), travelTimes);
                 Statistics statistics = new Statistics(travelTimes);

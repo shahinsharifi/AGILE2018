@@ -23,7 +23,7 @@ public class EvolutionLogger<T> implements IslandEvolutionObserver<T> {
     public void populationUpdate(PopulationData<? extends T> data) {
         try {
             if(data.getGenerationNumber() % 100 == 0) {
-                progress.put(data.getGenerationNumber() , (long) data.getBestCandidateFitness());
+                progress.put(data.getGenerationNumber() , (long) (data.getBestCandidateFitness()/60));
                 Logger.info("Generation " + data.getGenerationNumber() + ": " + data.getBestCandidateFitness());
             }
         } catch (Exception ex) {

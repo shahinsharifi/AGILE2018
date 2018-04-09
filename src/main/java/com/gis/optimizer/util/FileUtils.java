@@ -19,4 +19,15 @@ public class FileUtils {
             e.printStackTrace();
         }
     }
+
+    public static void printAlgorithmAggregation(Map<String,Map<String, Integer>> input, String fileName){
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        String result = gson.toJson(input);
+        try (FileWriter file = new FileWriter("/home/shahin/Documents/PhD/GISience/Experiments/"+fileName+".json")) {
+            file.write(result);
+            file.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
