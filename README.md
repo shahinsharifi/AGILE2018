@@ -1,9 +1,3 @@
-Deciding which workspace information to collect
-
-Collecting workspace information
-
-Filtering to most relevant information
-
 # DMatrix Project
 
 This project, named DMatrix, is a Java-based application developed with Spring Boot. It is designed to perform various operations related to Geographical Information Systems (GIS).
